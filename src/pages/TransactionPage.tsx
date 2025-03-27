@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import { fetchTransactions } from "../services/transactionService";
 import { Transaction } from "../types/transaction";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useReactToPrint } from "react-to-print"; // Print PDF
 
 const TransactionPage: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -11,6 +12,15 @@ const TransactionPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { tokens, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // To print in PDF
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: selectedTransaction ? `Transaction_${selectedTransaction.transactionId}` : 'Transaction',
+    onAfterPrint: () => setSelectedTransaction(null),
+  });
 
   useEffect(() => {
     if (!tokens) {
@@ -36,6 +46,35 @@ const TransactionPage: React.FC = () => {
     logout();
     navigate("/login");
   };
+
+  // To handle print
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setTimeout(() => {
+      if (contentRef.current) {
+        handlePrint();
+      }
+    }, 100); // Small delay to ensure component renders
+  };
+
+  // Printable component
+  const PrintableTransaction = ({ transaction }: { transaction: Transaction }) => (
+    <div ref={contentRef} className="p-6 max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">Transaction Receipt</h2>
+      <div className="border p-4 rounded-lg">
+        <div className="grid grid-cols-2 gap-2">
+          <p><strong>Transaction ID:</strong> {transaction.transactionId}</p>
+          <p><strong>Student Name:</strong> {transaction.studentName}</p>
+          <p><strong>User ID:</strong> {transaction.userId}</p>
+          <p><strong>Username:</strong> {transaction.username}</p>
+          <p><strong>Book Title:</strong> {transaction.bookTitle}</p>
+          <p><strong>Type:</strong> {transaction.transactionType}</p>
+          <p><strong>Date:</strong> {new Date(transaction.date).toLocaleString()}</p>
+        </div>
+      </div>
+      <p className="mt-4 text-sm text-gray-500">Printed on: {new Date().toLocaleString()}</p>
+    </div>
+  );
 
   return (
     <div className="flex">
@@ -71,7 +110,8 @@ const TransactionPage: React.FC = () => {
                       transactions.map((txn) => (
                         <tr
                           key={txn.transactionId}
-                          className="border-b border-gray-300 last:border-none hover:bg-gray-100"
+                          className="border-b border-gray-300 last:border-none hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleTransactionClick(txn)}
                         >
                           <td className="p-3 text-center">{txn.transactionId}</td>
                           <td className="p-3 text-center">{txn.studentName}</td>
@@ -98,6 +138,11 @@ const TransactionPage: React.FC = () => {
           )}
         </div>
       </div>
+      {selectedTransaction && (
+        <div style={{ display: "none" }}>
+          <PrintableTransaction transaction={selectedTransaction} />
+        </div>
+      )}
     </div>
   );
 };
