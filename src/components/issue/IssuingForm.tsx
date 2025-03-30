@@ -4,7 +4,6 @@ import { fetchStudents } from "../../services/studentService";
 import { Book } from "../../types/books";
 import { IssuingTransaction } from "../../types/issuing";
 import { Student } from "../../types/student";
-
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
@@ -13,27 +12,29 @@ interface IssuingFormProps {
 }
 
 const IssuingForm: React.FC<IssuingFormProps> = ({ onSubmit }) => {
+  const { tokens, userId, username, logout } = useAuth(); // Added username
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<IssuingTransaction>({
-    studentId: 0,         
-    userId: 0,           
-    bookId: 0,           
-    transactionType: "Borrow", 
-    date: new Date().toISOString().split("T")[0], 
+    studentId: 0,
+    userId: userId || 0, // Use logged-in userId
+    bookId: 0,
+    transactionType: "Borrow",
+    date: new Date().toISOString().split("T")[0],
   });
   const [students, setStudents] = useState<Student[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { tokens, logout } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!tokens) {
+    if (!tokens || !userId || !username) {
       navigate("/login");
     } else {
       loadData();
+      setFormData((prev) => ({ ...prev, userId })); // Ensure userId is set
     }
-  }, [tokens, navigate]);
+  }, [tokens, userId, username, navigate]);
 
   const loadData = async () => {
     try {
@@ -60,7 +61,7 @@ const IssuingForm: React.FC<IssuingFormProps> = ({ onSubmit }) => {
     onSubmit(formData);
     setFormData({
       studentId: 0,
-      userId: 0,
+      userId: userId || 0,
       bookId: 0,
       transactionType: "Borrow",
       date: new Date().toISOString().split("T")[0],
@@ -75,8 +76,8 @@ const IssuingForm: React.FC<IssuingFormProps> = ({ onSubmit }) => {
     setFormData((prev) => ({
       ...prev,
       [name]:
-        name === "studentId" || name === "bookId" || name === "userId"
-          ? Number(value) // Convert to number for numeric fields
+        name === "studentId" || name === "bookId"
+          ? Number(value)
           : value,
     }));
   };
@@ -105,7 +106,7 @@ const IssuingForm: React.FC<IssuingFormProps> = ({ onSubmit }) => {
               Student
             </label>
             <select
-              name="studentId" // Updated to camelCase
+              name="studentId"
               value={formData.studentId}
               onChange={handleChange}
               required
@@ -133,14 +134,13 @@ const IssuingForm: React.FC<IssuingFormProps> = ({ onSubmit }) => {
               className="form-label"
               style={{ fontSize: "14px", fontWeight: "bold", color: "#333" }}
             >
-              User ID
+              Librarian
             </label>
             <input
-              type="number" // Changed to number input
-              name="userId" // Updated to camelCase
-              value={formData.userId}
-              onChange={handleChange}
-              required
+              type="text" // Changed to text to display username
+              name="userId"
+              value={username || "Unknown"} // Display username from AuthContext
+              readOnly
               style={{
                 height: "65px",
                 backgroundColor: "#D9D9D9",
@@ -148,6 +148,8 @@ const IssuingForm: React.FC<IssuingFormProps> = ({ onSubmit }) => {
                 borderRadius: "4px",
                 width: "100%",
                 padding: "0 10px",
+                color: "#333",
+                cursor: "not-allowed",
               }}
             />
           </div>
@@ -162,7 +164,7 @@ const IssuingForm: React.FC<IssuingFormProps> = ({ onSubmit }) => {
               Book
             </label>
             <select
-              name="bookId" // Updated to camelCase
+              name="bookId"
               value={formData.bookId}
               onChange={handleChange}
               required
@@ -193,7 +195,7 @@ const IssuingForm: React.FC<IssuingFormProps> = ({ onSubmit }) => {
               Transaction Type
             </label>
             <select
-              name="transactionType" // Updated to camelCase
+              name="transactionType"
               value={formData.transactionType}
               onChange={handleChange}
               required

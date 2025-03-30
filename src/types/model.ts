@@ -14,4 +14,6 @@ export interface User {
   export interface Tokens {
     accessToken: string;
     refreshToken: string;
+    userId: number;
   }
+

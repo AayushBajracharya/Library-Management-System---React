@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext'; // Adjust path if needed
-import { login } from '../../services/authService'; // Adjust path if needed
+import { useAuth } from '../../context/AuthContext';
+import { login } from '../../services/authService';
 import Book from '../../assets/Book.svg';
 
 const LoginForm: React.FC = () => {
@@ -15,8 +15,9 @@ const LoginForm: React.FC = () => {
     e.preventDefault();
     try {
       const tokens = await login({ username, password });
-      setAuthTokens(tokens); // Store tokens in AuthContext and localStorage
-      navigate('/dashboard'); // Redirect to dashboard after login
+      setAuthTokens(tokens, username); // Pass tokens and username to AuthContext
+      navigate('/dashboard', { state: { showLoginToast: true }, replace: true });
+      window.history.pushState(null, '', '/dashboard');
     } catch (err) {
       setError('Invalid username or password');
     }

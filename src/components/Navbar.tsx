@@ -1,13 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
 import Nav from "../assets/NAV.svg";
 import Logout from "../assets/W_logout.svg";
+import { useAuth } from "../context/AuthContext";
 
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.clear(); 
+    logout(); // Use the logout function from AuthContext
     navigate('/login');
   };
 
