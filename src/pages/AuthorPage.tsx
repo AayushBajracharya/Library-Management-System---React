@@ -15,7 +15,6 @@ const AuthorPage: React.FC = () => {
   const { tokens, logout } = useAuth();
   const navigate = useNavigate();
   
-// Redirect to login if not authenticated
 useEffect(() => {
   if (!tokens) {
     navigate("/login");

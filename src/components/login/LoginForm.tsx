@@ -1,27 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { login } from '../../services/authService';
+import React from 'react';
 import Book from '../../assets/Book.svg';
+import { useLogin } from '../../hooks/useLogin';
 
 const LoginForm: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login: setAuthTokens } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const tokens = await login({ username, password });
-      setAuthTokens(tokens, username); // Pass tokens and username to AuthContext
-      navigate('/dashboard', { state: { showLoginToast: true }, replace: true });
-      window.history.pushState(null, '', '/dashboard');
-    } catch (err) {
-      setError('Invalid username or password');
-    }
-  };
+  const { formData, loading, error, handleChange, handleSubmit } = useLogin();
 
   return (
     <div className="flex flex-col justify-center items-center h-screen w-1/2 bg-white">
@@ -29,23 +11,25 @@ const LoginForm: React.FC = () => {
         <img src={Book} alt="Library Logo" className="mb-4 mx-auto" />
         <h2 className="text-2xl font-bold mb-2">HSMSS Library Management System</h2>
         <p className="text-lg mb-6">Please enter your credentials</p>
-        
+
         <div className="mb-4">
           <input
             type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
             placeholder="Username"
             className="w-4/5 mx-auto p-3 border border-black rounded-full text-center text-gray-600 text-lg"
             required
           />
         </div>
-        
+
         <div className="mb-4">
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
             placeholder="Password"
             className="w-4/5 mx-auto p-3 border border-black rounded-full text-center text-gray-600 text-lg"
             required
@@ -56,9 +40,10 @@ const LoginForm: React.FC = () => {
           <span className="mb-2 text-sm">Forgot Password?</span>
           <button
             type="submit"
-            className="bg-[#255d81] text-white py-3 px-20 rounded-full font-bold text-lg"
+            disabled={loading}
+            className="bg-[#255d81] text-white py-3 px-20 rounded-full font-bold text-lg disabled:bg-gray-400"
           >
-            Log In
+            {loading ? 'Logging in...' : 'Log In'}
           </button>
         </div>
 

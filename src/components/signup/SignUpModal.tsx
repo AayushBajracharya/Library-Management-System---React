@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import { User } from "../../types/model";
-import { signup } from "../../services/authService";
+import React from 'react';
+import { useDraggableModal } from '../../hooks/useDraggableModal';
+import { useSignup } from '../../hooks/useSignup';
 
 interface SignUpModalProps {
   isOpen: boolean;
@@ -8,75 +8,18 @@ interface SignUpModalProps {
 }
 
 const SignUpModel: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
-  const [user, setUser] = useState<User>({
-    userId: 0,
-    username: '',
-    password: '',
-    email: '',
-    role: '',
-  });
-  const [error, setError] = useState<string | null>(null);
-
-  // Refs for dragging
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const headerRef = useRef<HTMLDivElement | null>(null);
-
-  // Drag state
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = useState(false);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (dragging) {
-        setPosition({
-          x: e.clientX - offset.x,
-          y: e.clientY - offset.y
-        });
-      }
-    };
-
-    const handleMouseUp = () => setDragging(false);
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [dragging, offset]);
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!modalRef.current) return;
-    setDragging(true);
-    setOffset({
-      x: e.clientX - modalRef.current.offsetLeft,
-      y: e.clientY - modalRef.current.offsetTop
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await signup(user);
-      onClose();
-    } catch (err) {
-      setError('Signup failed. Please try again.');
-      console.error('Signup failed', err);
-    }
-  };
+  const { formData, loading, error, success, handleChange, handleSubmit } = useSignup(onClose);
+  const { modalRef, headerRef, position, handleMouseDown } = useDraggableModal();
 
   if (!isOpen) return null;
-  // shadow-lg border border-black-100
+
   return (
     <div className="fixed inset-0 bg-opacity-100 flex justify-center items-center z-50">
       <div
         ref={modalRef}
-        className="bg-white rounded-lg w-full max-w-md mx-4 absolute" 
+        className="bg-white rounded-lg w-full max-w-md mx-4 absolute"
         style={{ left: `${position.x}px`, top: `${position.y}px` }}
       >
-        {/* Modal Header (Drag Handle) */}
         <div
           ref={headerRef}
           onMouseDown={handleMouseDown}
@@ -93,7 +36,6 @@ const SignUpModel: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="p-4">
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
@@ -103,8 +45,9 @@ const SignUpModel: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
               <input
                 type="text"
                 id="username"
-                value={user.username}
-                onChange={(e) => setUser({ ...user, username: e.target.value })}
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
                 placeholder="Enter your username"
                 className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
@@ -118,8 +61,9 @@ const SignUpModel: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
               <input
                 type="email"
                 id="email"
-                value={user.email}
-                onChange={(e) => setUser({ ...user, email: e.target.value })}
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 placeholder="Enter your email"
                 className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
@@ -134,8 +78,9 @@ const SignUpModel: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
                 <input
                   type="password"
                   id="password"
-                  value={user.password}
-                  onChange={(e) => setUser({ ...user, password: e.target.value })}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="••••••"
                   className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
@@ -148,8 +93,9 @@ const SignUpModel: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
                 <input
                   type="text"
                   id="role"
-                  value={user.role}
-                  onChange={(e) => setUser({ ...user, role: e.target.value })}
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
                   placeholder="Role"
                   className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
@@ -159,12 +105,14 @@ const SignUpModel: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
 
             <button
               type="submit"
-              className="w-full bg-[#255d81] text-white p-3 rounded-md hover:bg-[#13364c] transition-colors"
+              disabled={loading}
+              className="w-full bg-[#255d81] text-white p-3 rounded-md hover:bg-[#13364c] transition-colors disabled:bg-gray-400"
             >
-              Register
+              {loading ? 'Registering...' : 'Register'}
             </button>
 
             {error && <p className="text-red-500 mt-2 text-center text-sm">{error}</p>}
+            {success && <p className="text-green-500 mt-2 text-center text-sm">Signup successful!</p>}
           </form>
         </div>
       </div>
