@@ -14,7 +14,7 @@ const BookPage: React.FC = () => {
     const [isEdit, setIsEdit] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { tokens, logout } = useAuth();
+    const { tokens} = useAuth();
     const navigate = useNavigate();
   
     useEffect(() => {
@@ -77,18 +77,13 @@ const BookPage: React.FC = () => {
         toast.error("Failed to delete book.");
       }
     };
-  
-    const handleLogout = () => {
-      logout();
-      navigate("/login");
-    };
     
     return (
       <div className="flex">
         <Navbar />
         <div className="ml-[222px] w-full">
           <div className="h-[65px] bg-white shadow-md flex items-center px-5">
-            <img src="" alt="Logo" className="w-8 h-8 mr-2" />
+            <img src="aa.png" alt="Logo" className="w-8 h-8 mr-2" />
             <h2 className="text-lg font-semibold">Book Info</h2>
           </div>
           <div className="bg-[#F2F2F2] p-5 h-[calc(100vh-65px)] overflow-y-auto">

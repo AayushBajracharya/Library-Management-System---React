@@ -1,13 +1,14 @@
-import axios from 'axios';
 import { LoginDTO, User, Tokens } from '../types/model';
+import apiClient from './tokenManagement/apiClient';
+import { TokenService } from './tokenManagement/TokenService';
 
-const API_URL = 'https://localhost:7238/api/Auth'; 
 
 export const login = async (credentials: LoginDTO): Promise<Tokens> => {
-  const response = await axios.post(`${API_URL}/login`, credentials);
+  const response = await apiClient.post<Tokens>('/Auth/login', credentials);
+  TokenService.setTokens(response.data);
   return response.data;
 };
 
 export const signup = async (user: User): Promise<void> => {
-  await axios.post(`${API_URL}/signup`, user);
+  await apiClient.post('/Auth/signup', user);
 };

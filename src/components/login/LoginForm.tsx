@@ -1,13 +1,16 @@
 import React from 'react';
+import { useForm} from 'react-hook-form';
 import Book from '../../assets/Book.svg';
 import { useLogin } from '../../hooks/useLogin';
+import { LoginDTO } from '../../types/model';
 
 const LoginForm: React.FC = () => {
-  const { formData, loading, error, handleChange, handleSubmit } = useLogin();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginDTO>();
+  const { loading, error: apiError, handleSubmit: onSubmit } = useLogin();
 
   return (
     <div className="flex flex-col justify-center items-center h-screen w-1/2 bg-white">
-      <form onSubmit={handleSubmit} className="w-full max-w-md text-center">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-md text-center">
         <img src={Book} alt="Library Logo" className="mb-4 mx-auto" />
         <h2 className="text-2xl font-bold mb-2">HSMSS Library Management System</h2>
         <p className="text-lg mb-6">Please enter your credentials</p>
@@ -15,25 +18,24 @@ const LoginForm: React.FC = () => {
         <div className="mb-4">
           <input
             type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
+            {...register('username', { required: 'Username is required' })}
             placeholder="Username"
             className="w-4/5 mx-auto p-3 border border-black rounded-full text-center text-gray-600 text-lg"
-            required
           />
+          {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>}
         </div>
 
         <div className="mb-4">
           <input
             type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
+            {...register('password', {
+              required: 'Password is required',
+              minLength: { value: 6, message: 'Password must be at least 6 characters' },
+            })}
             placeholder="Password"
             className="w-4/5 mx-auto p-3 border border-black rounded-full text-center text-gray-600 text-lg"
-            required
           />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
         </div>
 
         <div className="w-3/5 mx-auto flex flex-col items-start">
@@ -47,7 +49,7 @@ const LoginForm: React.FC = () => {
           </button>
         </div>
 
-        {error && <p className="text-red-500 mt-4">{error}</p>}
+        {apiError && <p className="text-red-500 mt-4">{apiError}</p>}
       </form>
     </div>
   );
